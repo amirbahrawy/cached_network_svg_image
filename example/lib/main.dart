@@ -1,6 +1,8 @@
 import 'package:cached_network_svg_image/cached_network_svg_image.dart';
 import 'package:flutter/material.dart';
 
+import 'second_page.dart';
+
 void main() {
   runApp(const MyApp());
 }
@@ -54,14 +56,26 @@ class _MyHomePageState extends State<MyHomePage> {
       appBar: AppBar(
         title: const Text('Cached Network SVG Image Demo'),
       ),
-      body: Center(
-        child: CachedNetworkSVGImage(
-          _imagesUrlList[_selectedIndex],
-          placeholder: const CircularProgressIndicator(color: Colors.green),
-          errorWidget: const Icon(Icons.error, color: Colors.red),
-          width: 250.0,
-          height: 250.0,
-          fadeDuration: const Duration(milliseconds: 700),
+      body: InkWell(
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+                builder: (context) =>
+                    SecondPage(_imagesUrlList[_selectedIndex])),
+          );
+        },
+        child: Center(
+          child: Hero(
+            tag: _imagesUrlList[_selectedIndex],
+            child: CachedNetworkSVGImage(
+              _imagesUrlList[_selectedIndex],
+              placeholder: const CircularProgressIndicator(color: Colors.green),
+              errorWidget: const Icon(Icons.error, color: Colors.red),
+              width: 150.0,
+              height: 150.0,
+            ),
+          ),
         ),
       ),
       floatingActionButton: FloatingActionButton(

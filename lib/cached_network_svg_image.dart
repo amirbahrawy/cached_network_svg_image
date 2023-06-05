@@ -1,8 +1,10 @@
 library cached_network_svg_image;
 
+import 'dart:async';
 import 'dart:developer';
 import 'dart:io';
 
+import 'package:cached_network_svg_image/custom_cache_manger.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
@@ -24,7 +26,7 @@ class CachedNetworkSVGImage extends StatefulWidget {
     String? semanticsLabel,
     bool excludeFromSemantics = false,
     SvgTheme theme = const SvgTheme(),
-    Duration fadeDuration = const Duration(milliseconds: 300),
+    Duration fadeDuration = const Duration(milliseconds: 500),
     ColorFilter? colorFilter,
     WidgetBuilder? placeholderBuilder,
   })  : _url = url,
@@ -89,15 +91,15 @@ class _CachedNetworkSVGImageState extends State<CachedNetworkSVGImage>
   File? _imageFile;
   late String _cacheKey;
 
-  late final DefaultCacheManager _cacheManager;
+  late final CustomCacheManager _cacheManager;
   late final AnimationController _controller;
-  late final Animation<double> _animation;
-
+  late Animation<double> _animation;
   @override
   void initState() {
     _cacheKey = CachedNetworkSVGImage._generateKeyFromUrl(widget._url);
     super.initState();
-    _cacheManager = DefaultCacheManager();
+    _cacheManager = CustomCacheManager();
+
     _controller = AnimationController(
       vsync: this,
       duration: widget._fadeDuration,
@@ -106,20 +108,21 @@ class _CachedNetworkSVGImageState extends State<CachedNetworkSVGImage>
     _loadImage();
   }
 
-  Future<void> _loadImage() async {
+  void _loadImage() async {
     try {
       _setToLoadingAfter15MsIfNeeded();
-
-      var file = (await _cacheManager.getFileFromMemory(_cacheKey))?.file;
-
-      file ??= await _cacheManager.getSingleFile(widget._url, key: _cacheKey);
-
-      _imageFile = file;
-      _isLoading = false;
-
-      _setState();
-
-      _controller.forward();
+      File? file = _cacheManager.fetchFileFromMemory(widget._url);
+      if (file == null) {
+        file = await _cacheManager.fetchSingleFile(widget._url, key: _cacheKey);
+        _imageFile = file;
+        _isLoading = false;
+        _setState();
+        _controller.forward();
+      } else {
+        _animation = Tween(begin: 1.0, end: 1.0).animate(_controller);
+        _imageFile = file;
+        _isLoading = false;
+      }
     } catch (e) {
       log('CachedNetworkSVGImage: $e');
 
